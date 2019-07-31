@@ -1,0 +1,68 @@
+{
+  "project_info": {
+    "project_number": "249492054986",
+    "firebase_url": "https://first-b02a9.firebaseio.com",
+    "project_id": "first-b02a9",
+    "storage_bucket": "first-b02a9.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:249492054986:android:55c8876361aedff5",
+        "android_client_info": {
+          "package_name": "com.taxi.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCGbOXFMXhfPQ5NKrtZrwuCgoTUxNJWX6A"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:249492054986:android:31b0109aa37b1125",
+        "android_client_info": {
+          "package_name": "com.taxidriver.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCGbOXFMXhfPQ5NKrtZrwuCgoTUxNJWX6A"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:249492054986:android:ae4838fac62c8c65",
+        "android_client_info": {
+          "package_name": "com.travel.taxi"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCGbOXFMXhfPQ5NKrtZrwuCgoTUxNJWX6A"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

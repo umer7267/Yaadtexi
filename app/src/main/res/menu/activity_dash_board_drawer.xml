@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:showIn="navigation_view">
+
+
+        <item
+            android:id="@+id/payment"
+            android:title="@string/payment" />
+        <item
+            android:id="@+id/your_trip"
+            android:title="@string/your_trip" />
+        <item
+            android:id="@+id/coupon"
+            android:title="@string/coupon" />
+        <item
+            android:id="@+id/nav_tools"
+            android:title="@string/wallet" />
+        <item
+            android:id="@+id/help"
+            android:title="@string/help" />
+        <item
+            android:id="@+id/share"
+            android:title="@string/share" />
+        <item
+            android:id="@+id/logout"
+            android:title="@string/logout" />
+
+
+
+</menu>
