@@ -143,7 +143,7 @@ public class PhoneNumber extends AppCompatActivity implements View.OnClickListen
             @Override
             public void onVerificationFailed(FirebaseException e) {
 
-                Log.w("phone", "onVerificationFailed", e);
+                Log.w("phone", "onVerificationFailed" + e.getLocalizedMessage());
                 if (e instanceof FirebaseAuthInvalidCredentialsException) {
                     Toast.makeText(PhoneNumber.this, "invalid phone number", Toast.LENGTH_SHORT).show();
                 } else if (e instanceof FirebaseTooManyRequestsException) {
@@ -335,7 +335,7 @@ else{
 
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.M)
+
     private void requestPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             requestPermissions(new String[]{READ_SMS, READ_PHONE_NUMBERS, READ_PHONE_STATE}, 100);

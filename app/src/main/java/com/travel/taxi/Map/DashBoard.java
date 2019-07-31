@@ -84,11 +84,14 @@ import com.travel.taxi.Ride.PickLocation;
 import com.travel.taxi.Signin;
 import com.travel.taxi.Utils.LocalPersistence;
 import com.travel.taxi.Utils.NetworkUtil;
+import com.wdullaer.materialdatetimepicker.date.DatePickerDialog;
+import com.wdullaer.materialdatetimepicker.time.TimePickerDialog;
 
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -102,7 +105,7 @@ import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 import static android.location.LocationManager.GPS_PROVIDER;
 
 public class DashBoard extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener, OnMapReadyCallback {
+        implements NavigationView.OnNavigationItemSelectedListener, OnMapReadyCallback, TimePickerDialog.OnTimeSetListener, DatePickerDialog.OnDateSetListener {
 
     private SupportMapFragment mMap;
     private GoogleMap map;
@@ -143,81 +146,23 @@ public class DashBoard extends AppCompatActivity
     private boolean handle = false;
     private AtomicBoolean up;
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        this.savedInstanceState = savedInstanceState;
-        setContentView(R.layout.activity_dash_board);
-        drawer = findViewById(R.id.drawer_layout);
-        navigationView = findViewById(R.id.nav_view);
-        View v = navigationView.getHeaderView(0);
-        String image = ((Response) LocalPersistence.readObjectFromFile(DashBoard.this)).getUser().getPicture();
-        profileImage = v.findViewById(R.id.profileimageView);
-        nameView = v.findViewById(R.id.name);
-        nameView.setText(((Response) LocalPersistence.readObjectFromFile(DashBoard.this)).getUser().getFirstName() + " " + ((Response) LocalPersistence.readObjectFromFile(DashBoard.this)).getUser().getLastName());
 
-        Picasso.get()
-                .load("http://yaadtaxi.com/userprofilepics/"+image)
-                .placeholder(R.drawable.ic_dummy_user)
-                .into(profileImage);
-        profileImage.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                startActivity(new Intent(DashBoard.this, UpdateProfile.class));
-            }
-        });
+//    @Override
+//    public void onDateSet(DatePickerDialog view, int year, int monthOfYear, int dayOfMonth) {
+//
+//    }
+//
+//    @Override
+//    public void onTimeSet(TimePickerDialog view, int hourOfDay, int minute, int second) {
+//
+//    }
 
-        timer = new CountDownTimer(4 * 1000, 1000) {
-            @Override
-            public void onTick(long millisUntilFinished) {
-                changeMarker();
-            }
+    //for date and time
+    int year, dayOfMonth;
+    String monthOfYear;
 
-            @Override
-            public void onFinish() {
-                UpdateLocation();
-            }
-        };
-        statusCheck();
-        mApi= Utils.getApiService();
-        mMap = (SupportMapFragment) getSupportFragmentManager()
-                .findFragmentById(R.id.map);
-
-        //to get the state of the screen where a pin selection screen or main screen
-        if (getIntent().getExtras() != null) {
-            if (getIntent().getExtras().getBoolean("pick")) {
-                screenMain = false;
-                mMap.onCreate(savedInstanceState);
-                visibility(screenMain);
-                setMainForPickLocation();
-                Log.e("error", "does not occurr");
-                From = getIntent().getExtras().getParcelable("location");
-                To = (Place) getIntent().getExtras().getSerializable("place");
-            } else {
-                Log.e("error", "occurr");
-
-                screenMain = true;
-                mMap.onCreate(savedInstanceState);
-                visibility(screenMain);
-                setMainMapWithDrawer();
-                if (mCurrentLocationLongitudeLatitutde!=null)
-                    timer.start();
-
-            }
-        } else {
-
-
-            screenMain = true;
-            mMap.onCreate(savedInstanceState);
-            visibility(screenMain);
-            setMainMapWithDrawer();
-            if (mCurrentLocationLongitudeLatitutde!=null)
-            timer.start();
-
-        }
-
-
-    }
+    int hourOfDay, minute;
+    private EstimatedPrice fare;
 
     private void UpdateLocation() {
         Log.e("where", "in  UpdateLocation");
@@ -237,6 +182,7 @@ public class DashBoard extends AppCompatActivity
         super.onStop();
         timer.cancel();
     }
+
     private void callUpdateLocation() {
         Log.e("where", "in  callUpdateLocation");
 
@@ -477,74 +423,80 @@ public class DashBoard extends AppCompatActivity
         });
     }
 
-    /**
-     * to change the visibilty of the code while a user presses the done on the pick location screen done button
-     */
+    private Integer no_of_passenger_int, no_of_bag_int;
 
-    private void visibility() {
-        mPickLocation.setVisibility(View.VISIBLE);
-//            overridePendingTransition(R.anim.slide_out_top, R.anim.slide_out_bottom);
-        //animation that will be making the thing look like floating
-        Animation slideUp = AnimationUtils.loadAnimation(this, R.anim.slide_in_top);
-        inflatebottomView();
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        this.savedInstanceState = savedInstanceState;
+        setContentView(R.layout.activity_dash_board);
+        drawer = findViewById(R.id.drawer_layout);
+        navigationView = findViewById(R.id.nav_view);
+        View v = navigationView.getHeaderView(0);
+        String image = ((Response) LocalPersistence.readObjectFromFile(DashBoard.this)).getUser().getPicture();
+        profileImage = v.findViewById(R.id.profileimageView);
+        nameView = v.findViewById(R.id.name);
+        nameView.setText(((Response) LocalPersistence.readObjectFromFile(DashBoard.this)).getUser().getFirstName() + " " + ((Response) LocalPersistence.readObjectFromFile(DashBoard.this)).getUser().getLastName());
 
-
-//        include.animate().translationY(include.getHeight()-360);
-        TextView mDonebottom = include.findViewById(R.id.done);
-        mDonebottom.setOnClickListener(view -> {
-            bottomOn = true;
-            Animation slideDown = AnimationUtils.loadAnimation(this, R.anim.slide_in_bottom);
-            include.setVisibility(View.GONE);
-            include.startAnimation(slideDown);
-
-            inflateEsimateedView();
-
-
-//
-//            mPickLocation.animate()
-//                    .translationY(-mPickLocation.getHeight())
-//                    .alpha(0.0f)
-//                    .setDuration(500)
-//                    .setListener(new AnimatorListenerAdapter() {
-//                        @Override
-//                        public void onAnimationEnd(Animator animation) {
-//                            super.onAnimationEnd(animation);
-//                            mPickLocation.setVisibility(View.GONE);
-//                        }
-//                    });
-                up= new AtomicBoolean(true);
-            DrawingHelper helper = new DrawingHelper(map, this);
-            String url = helper.getDirectionsUrl(new LatLng(From.getLatitude(), From.getLongitude()),
-                    new LatLng(To.getLatitude(), To.getLongitude()));
-            helper.run(url, 150);
-            map.setOnMapClickListener(latLng -> {
-                if(up.get()){
-                    deflateEstimatedView();
-                    up.set(false);
-
-                }else{
-                    up.set(true);
-
-                    inflateEsimateedViewWithData();
-                }
-//                onmapClicked();
-//                map.setOnMapClickListener(null);
-            });
-
+        Picasso.get()
+                .load("http://yaadtaxi.com/userprofilepics/" + image)
+                .placeholder(R.drawable.ic_dummy_user)
+                .into(profileImage);
+        profileImage.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(DashBoard.this, UpdateProfile.class));
+            }
         });
-    }
 
-    private void inflateEsimateedViewWithData() {
-        Log.e("inflateE", "inflateEsimateedViewWithData: " );
-        include1.setVisibility(View.VISIBLE);
-        TranslateAnimation animate = new TranslateAnimation(
-                0,                 // fromXDelta
-                0,                 // toXDelta
-                include1.getHeight() + 250,  // fromYDelta
-                0);                // toYDelta
-        animate.setDuration(500);
-        animate.setFillAfter(true);
-        include1.startAnimation(animate);
+        timer = new CountDownTimer(4 * 1000, 1000) {
+            @Override
+            public void onTick(long millisUntilFinished) {
+                changeMarker();
+            }
+
+            @Override
+            public void onFinish() {
+                UpdateLocation();
+            }
+        };
+        statusCheck();
+        mApi = Utils.getApiService();
+        mMap = (SupportMapFragment) getSupportFragmentManager()
+                .findFragmentById(R.id.map);
+
+        //to get the state of the screen where a pin selection screen or main screen
+        if (getIntent().getExtras() != null) {
+            if (getIntent().getExtras().getBoolean("pick")) {
+                screenMain = false;
+                mMap.onCreate(savedInstanceState);
+                visibility(screenMain);
+                setMainForPickLocation();
+                Log.e("error", "does not occurr");
+                From = getIntent().getExtras().getParcelable("location");
+                To = (Place) getIntent().getExtras().getSerializable("place");
+            } else {
+                Log.e("error", "occurr");
+
+                screenMain = true;
+                mMap.onCreate(savedInstanceState);
+                visibility(screenMain);
+                setMainMapWithDrawer();
+                if (mCurrentLocationLongitudeLatitutde != null)
+                    timer.start();
+
+            }
+        } else {
+
+
+            screenMain = true;
+            mMap.onCreate(savedInstanceState);
+            visibility(screenMain);
+            setMainMapWithDrawer();
+            if (mCurrentLocationLongitudeLatitutde != null)
+                timer.start();
+
+        }
 
 
     }
@@ -662,14 +614,84 @@ public class DashBoard extends AppCompatActivity
 
     }
 
+    /**
+     * to change the visibilty of the code while a user presses the done on the pick location screen done button
+     */
 
-    public void deflateEstimatedView(){
+    private void visibility() {
+        mPickLocation.setVisibility(View.VISIBLE);
+//            overridePendingTransition(R.anim.slide_out_top, R.anim.slide_out_bottom);
+        //animation that will be making the thing look like floating
+        Animation slideUp = AnimationUtils.loadAnimation(this, R.anim.slide_in_top);
+        inflatebottomView();
 
-        Log.e("deflateEstimatedView", "deflateEstimatedView: " );
+
+//        include.animate().translationY(include.getHeight()-360);
+        TextView mDonebottom = include.findViewById(R.id.done);
+        mDonebottom.setOnClickListener(view -> {
+            bottomOn = true;
+            Animation slideDown = AnimationUtils.loadAnimation(this, R.anim.slide_in_bottom);
+            include.setVisibility(View.GONE);
+            include.startAnimation(slideDown);
+
+            inflateEsimateedView();
+
+
+//
+//            mPickLocation.animate()
+//                    .translationY(-mPickLocation.getHeight())
+//                    .alpha(0.0f)
+//                    .setDuration(500)
+//                    .setListener(new AnimatorListenerAdapter() {
+//                        @Override
+//                        public void onAnimationEnd(Animator animation) {
+//                            super.onAnimationEnd(animation);
+//                            mPickLocation.setVisibility(View.GONE);
+//                        }
+//                    });
+            up = new AtomicBoolean(true);
+            DrawingHelper helper = new DrawingHelper(map, this);
+            String url = helper.getDirectionsUrl(new LatLng(From.getLatitude(), From.getLongitude()),
+                    new LatLng(To.getLatitude(), To.getLongitude()));
+            helper.run(url, 150);
+            map.setOnMapClickListener(latLng -> {
+                if (up.get()) {
+                    deflateEstimatedView();
+                    up.set(false);
+
+                } else {
+                    up.set(true);
+
+                    inflateEsimateedViewWithData();
+                }
+//                onmapClicked();
+//                map.setOnMapClickListener(null);
+            });
+
+        });
+    }
+
+    private void inflateEsimateedViewWithData() {
+        Log.e("inflateE", "inflateEsimateedViewWithData: ");
+        include1.setVisibility(View.VISIBLE);
+        TranslateAnimation animate = new TranslateAnimation(
+                0,                 // fromXDelta
+                0,                 // toXDelta
+                include1.getHeight() + 250,  // fromYDelta
+                0);                // toYDelta
+        animate.setDuration(500);
+        animate.setFillAfter(true);
+        include1.startAnimation(animate);
+
+
+    }
+
+    public void deflateEstimatedView() {
+
+        Log.e("deflateEstimatedView", "deflateEstimatedView: ");
         Animation slideDown = AnimationUtils.loadAnimation(this, R.anim.slide_in_bottom);
         include1.setVisibility(View.GONE);
         include1.startAnimation(slideDown);
-
 
 
     }
@@ -707,34 +729,18 @@ public class DashBoard extends AppCompatActivity
 
                         ((TextView) include1.findViewById(R.id.price)).setText(String.valueOf(fare.getEstimatedFare()));
                         ((TextView) include1.findViewById(R.id.eta)).setText(String.valueOf(fare.getTime()));
-                        TextView mRideButton = include1.findViewById(R.id.ride);
+                        TextView mRideButton = include1.findViewById(R.id.ride);//ride
+                        TextView mSchedule = include1.findViewById(R.id.schedule);//schedule
+
+
+                        mSchedule.setOnClickListener(v -> {
+                            showDialogAlert(false, fare);
+                        });
+
+
                         mRideButton.setOnClickListener(ride -> {
+                            showDialogAlert(true, fare);
 
-
-                            View alertLayout = LayoutInflater.from(DashBoard.this).inflate(R.layout.no_of_passenger_withholdings_dialog, null);
-
-                            AlertDialog.Builder builder = new AlertDialog.Builder(DashBoard.this);
-                            builder.setView(alertLayout);
-                            TextView done = alertLayout.findViewById(R.id.submit);
-                            EditText no_of_passenger = alertLayout.findViewById(R.id.no_of_passenger);
-                            EditText no_of_bags = alertLayout.findViewById(R.id.no_of_bag);
-
-                            AlertDialog dialog = builder.create();
-                            dialog.show();
-                            done.setOnClickListener(submit -> {
-
-                                if (!TextUtils.isEmpty(no_of_passenger.getText()) && !TextUtils.isEmpty(no_of_bags.getText())) {
-                                    dialog.dismiss();
-
-                                    requestRide(no_of_bags.getText().toString(), no_of_passenger.getText().toString(), fare.getDistance());
-                                }
-                                if (!TextUtils.isEmpty(no_of_passenger.getText())) {
-                                    no_of_passenger.setError("please fill this");
-                                }
-                                if (!TextUtils.isEmpty(no_of_bags.getText())) {
-                                    no_of_bags.setError("please fill this");
-                                }
-                            });
 
                         });
                     }
@@ -748,10 +754,76 @@ public class DashBoard extends AppCompatActivity
             });
 
 
-        }else{
+        } else {
             Toast.makeText(this, "Please Select The Car", Toast.LENGTH_SHORT).show();
         }
     }
+
+    private void showDialogAlert(Boolean flag, EstimatedPrice fare) {
+        this.fare = fare;
+        View alertLayout = LayoutInflater.from(DashBoard.this).inflate(R.layout.no_of_passenger_withholdings_dialog, null);
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(DashBoard.this);
+        builder.setView(alertLayout);
+        TextView done = alertLayout.findViewById(R.id.submit);
+        EditText no_of_passenger = alertLayout.findViewById(R.id.no_of_passenger);
+        EditText no_of_bags = alertLayout.findViewById(R.id.no_of_bag);
+
+        AlertDialog dialog = builder.create();
+        dialog.show();
+        done.setOnClickListener(submit -> {
+
+            if (!TextUtils.isEmpty(no_of_passenger.getText()) && !TextUtils.isEmpty(no_of_bags.getText())) {
+                dialog.dismiss();
+                if (flag)
+                    requestRide(no_of_bags.getText().toString(), no_of_passenger.getText().toString(), fare.getDistance());
+                else {
+                    no_of_bag_int = Integer.valueOf(no_of_bags.getText().toString());
+                    no_of_passenger_int = Integer.valueOf(no_of_passenger.getText().toString());
+                    showDateTimePicker();
+
+                }
+            }
+            if (!TextUtils.isEmpty(no_of_passenger.getText())) {
+                no_of_passenger.setError("please fill this");
+            }
+            if (!TextUtils.isEmpty(no_of_bags.getText())) {
+                no_of_bags.setError("please fill this");
+            }
+        });
+
+    }
+
+    private void showDateTimePicker() {
+        Calendar now = Calendar.getInstance();
+        DatePickerDialog dpd = DatePickerDialog.newInstance(
+                DashBoard.this,
+                now.get(Calendar.YEAR), // Initial year selection
+                now.get(Calendar.MONTH), // Initial month selection
+                now.get(Calendar.DAY_OF_MONTH) // Inital day selection
+        );
+// If you're calling this from a support Fragment
+//        dpd.show(getFragmentManager(), "Datepickerdialog");
+// If you're calling this from an AppCompatActivity
+        dpd.show(getSupportFragmentManager(), "Datepickerdialog");
+        dpd.setVersion(DatePickerDialog.Version.VERSION_2);
+    }
+
+    private void showTimePicker() {
+        Calendar now = Calendar.getInstance();
+        TimePickerDialog dpd = TimePickerDialog.newInstance(
+                DashBoard.this,
+                now.getTime().getHours(),
+                now.getTime().getMinutes(),
+                true
+        );
+// If you're calling this from a support Fragment
+//        dpd.show(getFragmentManager(), "Datepickerdialog");
+// If you're calling this from an AppCompatActivity
+        dpd.show(getSupportFragmentManager(), "TimePickerDialog");
+        dpd.setVersion(TimePickerDialog.Version.VERSION_2);
+    }
+
     @NotNull
     private ProgressDialog StartOnScreen(DashBoard dashBoard) {
         return new ProgressDialog(dashBoard);
@@ -783,6 +855,56 @@ public class DashBoard extends AppCompatActivity
                         backToMainScreen();
                     } else {
                         inflateDriveriew(request);
+                    }
+                } else {
+                    if (response.code() == 500) {
+                        dialog.dismiss();
+                        Toast.makeText(DashBoard.this, "internal server error", Toast.LENGTH_SHORT).show();
+                    }
+                }
+                Log.e("code", response.code() + "");
+            }
+
+
+            @Override
+            public void onFailure(Call<RideRequest> call, Throwable t) {
+                dialog.dismiss();
+                Log.e("responce failure", t.getLocalizedMessage());
+            }
+        });
+
+    }
+
+
+    private void requestRide(String noofbags, String no_of_passenger, Integer fare, String schedule_date, String schedule_time) {
+        ProgressDialog dialog = StartOnScreen(this);
+        dialog.setMessage("Loading..");
+        dialog.setCancelable(false);
+        dialog.show();
+        final String mAccessToken = ((Response) LocalPersistence.readObjectFromFile(DashBoard.this)).getAccessToken();
+        mApi.RequestRide("Bearer " + mAccessToken,
+                From.getLatitude(),
+                From.getLongitude(),
+                To.getLatitude(),
+                To.getLongitude(),
+                slected.getId(),
+                Double.valueOf(fare),
+                "CASH",
+                Integer.valueOf(noofbags),
+                Integer.valueOf(no_of_passenger),
+                schedule_date,
+                schedule_time).enqueue(new Callback<RideRequest>() {
+            @Override
+            public void onResponse(Call<RideRequest> call, retrofit2.Response<RideRequest> response) {
+                if (response.isSuccessful()) {
+                    dialog.dismiss();
+                    RideRequest request = response.body();
+                    if (request.getMessage().equals("No Drivers Found")) {
+                        Toast.makeText(DashBoard.this, "No Ride Available", Toast.LENGTH_SHORT).show();
+                        backToMainScreen();
+                    } else {
+                        Toast.makeText(DashBoard.this, "Ride Successfully registered", Toast.LENGTH_SHORT).show();
+                        backToMainScreen();
                     }
                 } else {
                     if (response.code() == 500) {
@@ -996,7 +1118,6 @@ public class DashBoard extends AppCompatActivity
     }
 
 
-
     private void getAddress(Place place) {
         Geocoder geocoder;
         List<Address> addresses = null;
@@ -1120,34 +1241,33 @@ public class DashBoard extends AppCompatActivity
             geocoder = new Geocoder(this, Locale.getDefault());
 
             try {
-                if(mCurrentLocationLongitudeLatitutde!=null){
-                addresses = geocoder.getFromLocation(mCurrentLocationLongitudeLatitutde.getLatitude(), mCurrentLocationLongitudeLatitutde.getLongitude(), 1); // Here 1 represent max location result to returned, by documents it recommended 1 to 5
-            }
-            }catch (IOException e) {
+                if (mCurrentLocationLongitudeLatitutde != null) {
+                    addresses = geocoder.getFromLocation(mCurrentLocationLongitudeLatitutde.getLatitude(), mCurrentLocationLongitudeLatitutde.getLongitude(), 1); // Here 1 represent max location result to returned, by documents it recommended 1 to 5
+                }
+            } catch (IOException e) {
                 Log.e("error", e.getLocalizedMessage());
 
             }
-                if (addresses!=null){
-                    String address = addresses.get(0).getAddressLine(0); // If any additional address line present than only, check with max available address lines by getMaxAddressLineIndex()
-                    String city = addresses.get(0).getLocality();
-                    String state = addresses.get(0).getAdminArea();
-                    String country = addresses.get(0).getCountryName();
-                    String postalCode = addresses.get(0).getPostalCode();
-                    String knownName = addresses.get(0).getFeatureName();
+            if (addresses != null) {
+                String address = addresses.get(0).getAddressLine(0); // If any additional address line present than only, check with max available address lines by getMaxAddressLineIndex()
+                String city = addresses.get(0).getLocality();
+                String state = addresses.get(0).getAdminArea();
+                String country = addresses.get(0).getCountryName();
+                String postalCode = addresses.get(0).getPostalCode();
+                String knownName = addresses.get(0).getFeatureName();
 
-                    com.travel.taxi.Model.Address addresss = new com.travel.taxi.Model.Address(address, city, state, country, postalCode, knownName);
-                    Intent intent = new Intent(getApplicationContext(), PickLocation.class);
-                    Bundle bundle = new Bundle();
-                    bundle.putSerializable("address", addresss);
-                    bundle.putShort("type", (short) 0);
-                    bundle.putParcelable("location", mCurrentLocationLongitudeLatitutde);
-                    intent.putExtras(bundle);
-                    startActivity(intent);
-                    finish();
-                }
-                else{
-                    Toast.makeText(this, "No Network coverage ", Toast.LENGTH_SHORT).show();
-                }
+                com.travel.taxi.Model.Address addresss = new com.travel.taxi.Model.Address(address, city, state, country, postalCode, knownName);
+                Intent intent = new Intent(getApplicationContext(), PickLocation.class);
+                Bundle bundle = new Bundle();
+                bundle.putSerializable("address", addresss);
+                bundle.putShort("type", (short) 0);
+                bundle.putParcelable("location", mCurrentLocationLongitudeLatitutde);
+                intent.putExtras(bundle);
+                startActivity(intent);
+                finish();
+            } else {
+                Toast.makeText(this, "No Network coverage ", Toast.LENGTH_SHORT).show();
+            }
 
         });
 
@@ -1197,7 +1317,6 @@ public class DashBoard extends AppCompatActivity
 //                mCurrentLocationLongitudeLatitutde = getcurrentLocation();
                 getcurrentLocation();
         } else {
-
 
 
         }
@@ -1509,7 +1628,7 @@ public class DashBoard extends AppCompatActivity
 
     @Override
     protected void onResume() {
-        Log.e("mess","resume");
+        Log.e("mess", "resume");
 
         super.onResume();
         if (mMap != null) {
@@ -1522,7 +1641,7 @@ public class DashBoard extends AppCompatActivity
                     Log.e("error", "does not occurr");
                     From = getIntent().getExtras().getParcelable("location");
                     To = (Place) getIntent().getExtras().getSerializable("place");
-                    Log.e("mess","resume3");
+                    Log.e("mess", "resume3");
 
                 } else {
                     Log.e("error", "occurr");
@@ -1532,9 +1651,9 @@ public class DashBoard extends AppCompatActivity
                     visibility(screenMain);
                     setMainMapWithDrawer();
                     getcurrentLocation();
-                    if (mCurrentLocationLongitudeLatitutde!=null)
-                    timer.start();
-                    Log.e("mess","resume2");
+                    if (mCurrentLocationLongitudeLatitutde != null)
+                        timer.start();
+                    Log.e("mess", "resume2");
 
                 }
             } else {
@@ -1544,9 +1663,9 @@ public class DashBoard extends AppCompatActivity
                 setMainMapWithDrawer();
                 getcurrentLocation();
 
-                if (mCurrentLocationLongitudeLatitutde!=null)
-                timer.start();
-                Log.e("mess","resume3");
+                if (mCurrentLocationLongitudeLatitutde != null)
+                    timer.start();
+                Log.e("mess", "resume3");
             }
         }
     }
@@ -1563,7 +1682,7 @@ public class DashBoard extends AppCompatActivity
     @Override
     protected void onStart() {
         super.onStart();
-        Log.e("mess","start");
+        Log.e("mess", "start");
     }
 
     @Override
@@ -1589,9 +1708,10 @@ public class DashBoard extends AppCompatActivity
 
             if (handle) {
                 returnVisibilty();
-            } else if (visibility == false) {
+            } else if (visibility) {
                 if (bottomOn) {
                     onmapClicked();
+                    bottomOn = false;
 
                 } else {
                     visibility = true;
@@ -1652,7 +1772,7 @@ public class DashBoard extends AppCompatActivity
             shareIntent.setAction(Intent.ACTION_SEND);
             shareIntent.setType("text/plain");
             Intent chooser = Intent.createChooser(shareIntent, "Complete Action using..");
-                startActivity(chooser);
+            startActivity(chooser);
 
         } else if (id == R.id.logout) {
             logoutDialog();
@@ -1666,22 +1786,23 @@ public class DashBoard extends AppCompatActivity
         drawer.closeDrawer(GravityCompat.START);
         return true;
     }
+
     private void Logout() {
-        String Token=((Response)LocalPersistence.readObjectFromFile(DashBoard.this)).getAccessToken();
-        if (NetworkUtil.isConnectedToInternet(getApplicationContext())){
-            ProgressDialog dialog=new ProgressDialog(DashBoard.this,R.style.AppCompatAlertDialogStyle);
+        String Token = ((Response) LocalPersistence.readObjectFromFile(DashBoard.this)).getAccessToken();
+        if (NetworkUtil.isConnectedToInternet(getApplicationContext())) {
+            ProgressDialog dialog = new ProgressDialog(DashBoard.this, R.style.AppCompatAlertDialogStyle);
             dialog.setMessage("Logging Out");
             dialog.show();
             mApi.Logout(Token).enqueue(new Callback<ResponseBody>() {
                 @Override
                 public void onResponse(Call<ResponseBody> call, retrofit2.Response<ResponseBody> response) {
-                    if (response.isSuccessful()){
+                    if (response.isSuccessful()) {
                         LocalPersistence.deletefile(DashBoard.this);
 
                         dialog.dismiss();
                         startActivity(new Intent(getApplicationContext(), Signin.class));
                         finish();
-                    }else{
+                    } else {
 
                         dialog.dismiss();
                         Toast.makeText(getApplicationContext(), "An error Occurred", Toast.LENGTH_SHORT).show();
@@ -1696,8 +1817,8 @@ public class DashBoard extends AppCompatActivity
                 public void onFailure(Call<ResponseBody> call, Throwable t) {
                     dialog.dismiss();
                 }
-            });}
-        else
+            });
+        } else
             NetworkUtil.showNoInternetAvailableErrorDialog(getApplicationContext());
 
 
@@ -1707,7 +1828,7 @@ public class DashBoard extends AppCompatActivity
 
         final AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("YaadTaxi User App")
-                .setIcon(ContextCompat.getDrawable(this,R.drawable.yaadtaxi))
+                .setIcon(ContextCompat.getDrawable(this, R.drawable.yaadtaxi))
                 .setMessage("Are you sure want to logout")
                 .setCancelable(false)
                 .setPositiveButton("Yes", (dialog, id) -> {
@@ -1716,17 +1837,17 @@ public class DashBoard extends AppCompatActivity
                     Logout();
 
                 })
-                .setNegativeButton("No",(dialog,id)->{
+                .setNegativeButton("No", (dialog, id) -> {
                     dialog.dismiss();
                 });
 
         final AlertDialog alert = builder.create();
         //2. now setup to change color of the button
-        alert.setOnShowListener( new DialogInterface.OnShowListener() {
+        alert.setOnShowListener(new DialogInterface.OnShowListener() {
             @Override
             public void onShow(DialogInterface arg0) {
-                alert.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(ContextCompat.getColor(DashBoard.this,R.color.back));
-                alert.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(ContextCompat.getColor(DashBoard.this,R.color.back));
+                alert.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(ContextCompat.getColor(DashBoard.this, R.color.back));
+                alert.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(ContextCompat.getColor(DashBoard.this, R.color.back));
             }
         });
 
@@ -1734,4 +1855,64 @@ public class DashBoard extends AppCompatActivity
     }
 
 
+    @Override
+    public void onDateSet(DatePickerDialog view, int year, int monthOfYear, int dayOfMonth) {
+
+        switch (monthOfYear) {
+            case 0:
+                this.monthOfYear = "January";
+                break;
+            case 1:
+                this.monthOfYear = "February";
+                break;
+            case 2:
+                this.monthOfYear = "March";
+                break;
+            case 3:
+                this.monthOfYear = "April";
+                break;
+            case 4:
+                this.monthOfYear = "May";
+                break;
+            case 5:
+                this.monthOfYear = "June";
+                break;
+            case 6:
+                this.monthOfYear = "July";
+                break;
+            case 7:
+                this.monthOfYear = "August";
+                break;
+            case 8:
+                this.monthOfYear = "September";
+                break;
+            case 9:
+                this.monthOfYear = "October";
+                break;
+            case 10:
+                this.monthOfYear = "November";
+                break;
+            case 11:
+                this.monthOfYear = "December";
+                break;
+
+        }
+
+
+        this.year = year;
+        this.dayOfMonth = dayOfMonth;
+        showTimePicker();
+    }
+
+    @Override
+    public void onTimeSet(TimePickerDialog view, int hourOfDay, int minute, int second) {
+        this.hourOfDay = hourOfDay;
+        this.minute = minute;
+
+        Log.e("onTimeSet: ", "onTimeSet: month" + monthOfYear + "  year" + year + " day" + dayOfMonth + " year" + year + "\nhour"
+                + hourOfDay + " minute" + minute);
+
+        requestRide(String.valueOf(no_of_bag_int), String.valueOf(no_of_passenger_int), fare.getDistance(), "" + dayOfMonth + " " + monthOfYear + " " + year, hourOfDay + ":" + minute);
+
+    }
 }

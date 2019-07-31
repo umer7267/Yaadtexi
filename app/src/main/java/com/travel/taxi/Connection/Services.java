@@ -75,6 +75,21 @@ public interface Services {
                                   @Query("passengers") Integer passengers
     );
 
+    @POST("api/user/yaad/send/request")
+    Call<RideRequest> RequestRide(@Header("Authorization") String token,
+                                  @Query("s_latitude") Double s_latitude,
+                                  @Query("s_longitude") Double s_longitude,
+                                  @Query("d_latitude") Double d_latitude,
+                                  @Query("d_longitude") Double d_longitude,
+                                  @Query("service_type") Integer service_type,
+                                  @Query("distance") Double distance,
+                                  @Query("payment_mode") String payment_mode,
+                                  @Query("no_of_bags") Integer no_of_bags,
+                                  @Query("passengers") Integer passengers,
+                                  @Query("schedule_date") String schedule_date,
+                                  @Query("schedule_time") String schedule_time
+    );
+
     @POST("api/user/yaad/cancel/request")
     Call<CancelRide> CancelRide(@Header("Authorization") String token,
                                 @Query("request_id") Double request_id,
