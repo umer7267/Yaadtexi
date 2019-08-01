@@ -46,6 +46,9 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationCallback;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -147,22 +150,96 @@ public class DashBoard extends AppCompatActivity
     private AtomicBoolean up;
 
 
-//    @Override
-//    public void onDateSet(DatePickerDialog view, int year, int monthOfYear, int dayOfMonth) {
-//
-//    }
-//
-//    @Override
-//    public void onTimeSet(TimePickerDialog view, int hourOfDay, int minute, int second) {
-//
-//    }
-
     //for date and time
     int year, dayOfMonth;
     String monthOfYear;
 
     int hourOfDay, minute;
     private EstimatedPrice fare;
+
+
+    boolean check;
+    private LocationCallback locationCallback;
+    private LocationRequest locationRequest;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        this.savedInstanceState = savedInstanceState;
+        setContentView(R.layout.activity_dash_board);
+        drawer = findViewById(R.id.drawer_layout);
+        navigationView = findViewById(R.id.nav_view);
+        View v = navigationView.getHeaderView(0);
+        String image = ((Response) LocalPersistence.readObjectFromFile(DashBoard.this)).getUser().getPicture();
+        profileImage = v.findViewById(R.id.profileimageView);
+        nameView = v.findViewById(R.id.name);
+        nameView.setText(((Response) LocalPersistence.readObjectFromFile(DashBoard.this)).getUser().getFirstName() + " " + ((Response) LocalPersistence.readObjectFromFile(DashBoard.this)).getUser().getLastName());
+
+        Picasso.get()
+                .load("http://yaadtaxi.com/userprofilepics/" + image)
+                .placeholder(R.drawable.ic_dummy_user)
+                .into(profileImage);
+        profileImage.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(DashBoard.this, UpdateProfile.class));
+            }
+        });
+
+        timer = new CountDownTimer(4 * 1000, 1000) {
+            @Override
+            public void onTick(long millisUntilFinished) {
+                changeMarker();
+            }
+
+            @Override
+            public void onFinish() {
+                UpdateLocation();
+            }
+        };
+        statusCheck();
+        mApi = Utils.getApiService();
+        mMap = (SupportMapFragment) getSupportFragmentManager()
+                .findFragmentById(R.id.map);
+
+        //to get the state of the screen where a pin selection screen or main screen
+        if (getIntent().getExtras() != null) {
+            if (getIntent().getExtras().getBoolean("pick")) {
+                screenMain = false;
+                mMap.onCreate(savedInstanceState);
+                visibility(screenMain);
+                setMainForPickLocation();
+                Log.e("error", "does not occurr");
+                From = getIntent().getExtras().getParcelable("location");
+                To = (Place) getIntent().getExtras().getSerializable("place");
+            } else {
+                Log.e("error", "occurr");
+
+                screenMain = true;
+                mMap.onCreate(savedInstanceState);
+                visibility(screenMain);
+                setMainMapWithDrawer();
+                if (mCurrentLocationLongitudeLatitutde != null)
+                    timer.start();
+
+            }
+        } else {
+
+
+            screenMain = true;
+            mMap.onCreate(savedInstanceState);
+            visibility(screenMain);
+            setMainMapWithDrawer();
+            if (mCurrentLocationLongitudeLatitutde != null)
+                timer.start();
+
+        }
+
+
+    }
+
+
+
 
     private void UpdateLocation() {
         Log.e("where", "in  UpdateLocation");
@@ -259,7 +336,7 @@ public class DashBoard extends AppCompatActivity
 //                            mCurrentLocationLongitudeLatitutde = getcurrentLocation();
                             getcurrentLocation();
                             dialog.cancel();
-                            onResume();
+
                         }
                     })
                     .setNegativeButton("No", new DialogInterface.OnClickListener() {
@@ -421,85 +498,11 @@ public class DashBoard extends AppCompatActivity
                 Log.e("error", e.getLocalizedMessage());
             }
         });
+
     }
 
     private Integer no_of_passenger_int, no_of_bag_int;
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        this.savedInstanceState = savedInstanceState;
-        setContentView(R.layout.activity_dash_board);
-        drawer = findViewById(R.id.drawer_layout);
-        navigationView = findViewById(R.id.nav_view);
-        View v = navigationView.getHeaderView(0);
-        String image = ((Response) LocalPersistence.readObjectFromFile(DashBoard.this)).getUser().getPicture();
-        profileImage = v.findViewById(R.id.profileimageView);
-        nameView = v.findViewById(R.id.name);
-        nameView.setText(((Response) LocalPersistence.readObjectFromFile(DashBoard.this)).getUser().getFirstName() + " " + ((Response) LocalPersistence.readObjectFromFile(DashBoard.this)).getUser().getLastName());
-
-        Picasso.get()
-                .load("http://yaadtaxi.com/userprofilepics/" + image)
-                .placeholder(R.drawable.ic_dummy_user)
-                .into(profileImage);
-        profileImage.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                startActivity(new Intent(DashBoard.this, UpdateProfile.class));
-            }
-        });
-
-        timer = new CountDownTimer(4 * 1000, 1000) {
-            @Override
-            public void onTick(long millisUntilFinished) {
-                changeMarker();
-            }
-
-            @Override
-            public void onFinish() {
-                UpdateLocation();
-            }
-        };
-        statusCheck();
-        mApi = Utils.getApiService();
-        mMap = (SupportMapFragment) getSupportFragmentManager()
-                .findFragmentById(R.id.map);
-
-        //to get the state of the screen where a pin selection screen or main screen
-        if (getIntent().getExtras() != null) {
-            if (getIntent().getExtras().getBoolean("pick")) {
-                screenMain = false;
-                mMap.onCreate(savedInstanceState);
-                visibility(screenMain);
-                setMainForPickLocation();
-                Log.e("error", "does not occurr");
-                From = getIntent().getExtras().getParcelable("location");
-                To = (Place) getIntent().getExtras().getSerializable("place");
-            } else {
-                Log.e("error", "occurr");
-
-                screenMain = true;
-                mMap.onCreate(savedInstanceState);
-                visibility(screenMain);
-                setMainMapWithDrawer();
-                if (mCurrentLocationLongitudeLatitutde != null)
-                    timer.start();
-
-            }
-        } else {
-
-
-            screenMain = true;
-            mMap.onCreate(savedInstanceState);
-            visibility(screenMain);
-            setMainMapWithDrawer();
-            if (mCurrentLocationLongitudeLatitutde != null)
-                timer.start();
-
-        }
-
-
-    }
 
     private void returnVisibilty() {
         mPickLocation.setVisibility(View.VISIBLE);
@@ -1225,6 +1228,7 @@ public class DashBoard extends AppCompatActivity
 
         getcurrentLocation();
         mCurrentLocation.setOnClickListener(v -> {
+            buildAlertMessageNoGps();
 
 
 //            mCurrentLocationLongitudeLatitutde = getcurrentLocation();
@@ -1438,9 +1442,13 @@ public class DashBoard extends AppCompatActivity
         }
     }
 
+
     private Location getcurrentLocation() {
+//        buildAlertMessageNoGps();
+
         if (map != null)
             map.clear();
+        check = true;
 //
 //        LocationManager locationManager = (LocationManager)
 //                getSystemService(Context.LOCATION_SERVICE);
@@ -1515,6 +1523,59 @@ public class DashBoard extends AppCompatActivity
                             markerOptions.position(loc);
                             markerOptions.icon(BitmapDescriptorFactory.fromResource(R.drawable.current_location));
                             map.addMarker(markerOptions);
+                        } else {
+                            locationRequest = LocationRequest.create();
+                            locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+                            locationRequest.setInterval(20 * 1000);
+                            locationCallback = new LocationCallback() {
+                                @Override
+                                public void onLocationResult(LocationResult locationResult) {
+                                    if (locationResult == null) {
+                                        return;
+                                    }
+                                    for (Location currentlocation : locationResult.getLocations()) {
+                                        if (currentlocation != null) {
+                                            if (check) {
+                                                check = false;
+                                                double latitude = currentlocation.getLatitude();
+                                                double longitude = currentlocation.getLongitude();
+                                                LatLng loc = new LatLng(latitude, longitude);
+                                                CameraPosition.Builder builder = new CameraPosition.Builder();
+                                                builder.zoom(16);
+                                                builder.target(loc);
+                                                mCurrentLocationLongitudeLatitutde = currentlocation;
+                                                map.animateCamera(CameraUpdateFactory.newCameraPosition(builder.build()));
+//         Creating a marker
+                                                timer.start();
+                                                MarkerOptions markerOptions = new MarkerOptions();
+
+                                                // Setting the position for the marker
+                                                markerOptions.position(loc);
+                                                markerOptions.icon(BitmapDescriptorFactory.fromResource(R.drawable.current_location));
+                                                map.addMarker(markerOptions);
+                                                break;
+                                            }
+                                        }
+                                    }
+                                }
+
+                                ;
+                            };
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                                if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PERMISSION_GRANTED && checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) != PERMISSION_GRANTED) {
+                                    // TODO: Consider calling
+                                    //    Activity#requestPermissions
+                                    // here to request the missing permissions, and then overriding
+                                    //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                                    //                                          int[] grantResults)
+                                    // to handle the case where the user grants the permission. See the documentation
+                                    // for Activity#requestPermissions for more details.
+                                    return;
+                                }
+                            }
+                            fusedLocationClient.requestLocationUpdates(locationRequest,
+                                    locationCallback,
+                                    null);
                         }
                     }
 

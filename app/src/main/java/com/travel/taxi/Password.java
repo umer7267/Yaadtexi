@@ -76,7 +76,7 @@ finish();
 
         if (!(password.isEmpty() && password.length()<6)){
 
-            if(NetworkUtil.isConnectedToWifi(Password.this)||NetworkUtil.isConnectedToMobileNetwork(Password.this)){
+            if (NetworkUtil.isConnectedToWifi(Password.this) || NetworkUtil.isConnectedToMobileNetwork(Password.this) || NetworkUtil.isConnectedToInternet(Password.this)) {
                 dialog.show();
                 mApi.Login(email,password).enqueue(new Callback<LoginResponse>() {
 

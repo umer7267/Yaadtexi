@@ -33,6 +33,7 @@ public class Signin extends AppCompatActivity {
         else{
             Intent intent=new Intent(Signin.this, Intermediate.class);
             startActivity(intent);
+            finish();
         }
 
     }

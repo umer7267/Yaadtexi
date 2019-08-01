@@ -44,6 +44,15 @@ public class NetworkUtil {
                 networkInfo.getType() == ConnectivityManager.TYPE_WIFI;
     }
 
+    public static boolean isavailable(Context context) {
+        ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
+        return networkInfo != null &&
+                networkInfo.isConnectedOrConnecting() &&
+                networkInfo.getType() == ConnectivityManager.TYPE_WIFI;
+    }
+
+
     /**
      * Check if the device is connected to internet via <i>mobile network</i> or not.
      *
